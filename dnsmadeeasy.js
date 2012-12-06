@@ -14,7 +14,7 @@ var http = require('http'),
 var DNSMadeEasy = function(apikey, secret) {
 	this._apiKey = apikey;
 	this._secret = secret;
-	
+	console.log('Setting up DNSMadeEasy');	
 }
 
 DNSMadeEasy.prototype = {};
