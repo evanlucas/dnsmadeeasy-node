@@ -34,21 +34,31 @@ DNSMadeEasy.prototype._createHttpOptions = function(resource, method, action, da
 }
 
 
-DNSMadeEasy.prototype.managedDNS = function() {
-	var callback = null;
+DNSMadeEasy.prototype.managedDNS = function(callback) {
+	if (typeof callback != 'function') throw new Error('Callback must be a function');
 
-	var args = Array.prototype.slice.call(arguments, 1);
-	if (args[0] && typeof args[0] == 'function')
-		callback = args.shift() || callback;
-	
-	delete args;
 	var now = new Date().toGMTString();
 
 	var httpOptions = this._createHttpOptions('dns/managed', 'GET', '', now);
 	httpOptions.headers['Content-Type'] = 'application/json';
 	
 	var req = http.request(httpOptions, function(res) {
-		if (callback) callback(res,statusCode != 201 ? new Error(res.statusCode) : undefined);
+		if (res.statusCode != 200)
+			return callback(res.statusCode);
+
+		var data = '';
+
+		res.on('data', function(c) {
+			data += c;
+		});
+
+		res.on('close', function(err) {
+			callback(err.code);
+		});
+
+		res.on('end', function() {
+			callback(undefined, data);
+		});
 	});
 
 	req.end();
