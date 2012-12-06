@@ -1,0 +1,19 @@
+{
+  "name": "dnsmadeeasy",
+  "version": "0.0.1",
+  "description": "This is a module to connect to the dnsmadeeasy api",
+  "main": "dnsmadeeasy.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": "",
+  "keywords": [
+    "dns",
+    "dnsmadeeasy"
+  ],
+  "dependencies": {
+    "crypto": "0.0.3"
+  },
+  "author": "Evan Lucas",
+  "license": "BSD"
+}
