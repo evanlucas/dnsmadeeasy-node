@@ -18,20 +18,27 @@ var http = require('http'),
 	crypto = require('crypto');
 
 
-var DNSMadeEasy = function(apikey, secret) {
+var DNSMadeEasy = function(apikey, secret, isProd) {
 	this._apiKey = apikey;
 	this._secret = secret;
+	if (typeof(isProd) == 'undefined' || isProd == true) {
+		this._host = 'api.dnsmadeeasy.com';
+	} else {
+		this._host = 'api.sandbox.dnsmadeeasy.com';
+	}
 }
+
+
 
 DNSMadeEasy.prototype = {};
 
 DNSMadeEasy.prototype._createHttpOptions = function(resource, method, action) {
 	var date = new Date().toGMTString();
 	return {
-		host: 'api.dnsmadeeasy.com',
+		host: this._host,
 		port: 80,
 		method: method,
-		path: '/V2.0/' + resource + '/' + action,
+		path: '/V1.2/' + resource + '/' + action,
 		headers: {
 			'x-dnsme-apiKey': this._apiKey,
 			'x-dnsme-requestDate': date,
@@ -116,107 +123,64 @@ DNSMadeEasy.prototype._deleteRequest = function(path, cb) {
 	});
 	req.end();
 }
+
+
 // Get all domains
-
-DNSMadeEasy.prototype.getAllDomains = function(cb) {
-	return this._getRequest('dns/managed', cb);
+DNSMadeEasy.prototype.getDomains = function(cb) {
+	var self = this;
+	this._getRequest('domains', function(err, data){
+		if (err) {
+			cb(err);
+		} else {
+			cb(null, JSON.parse(data).list);
+		}
+	});
 }
 
-DNSMadeEasy.prototype.getDomainByID = function(id, cb) {
-	if (typeof id != 'number') throw new Error('Domain ID must be a number');
-	return this._getRequest('dns/managed/'+id, cb);	
-}
-DNSMadeEasy.prototype.updateDomainWithID = function(id, putData, cb) {
-	if (typeof id != 'number') throw new Error('Domain ID must be a number');
-	return this._putRequest('dns/managed/'+id, putData, cb);
-}
-DNSMadeEasy.prototype.updateDomains = function(putData, cb) {
-	return this._putRequest('dns/managed', putData, cb);
-}
-DNSMadeEasy.prototype.createDomains = function(putData, cb) {
-	return this._postRequest('dns/managed', putData, cb);
-}
-DNSMadeEasy.prototype.deleteDomain = function(id, cb) {
-	if (typeof id != 'number') throw new Error('Domain ID must be a number');
-	return this._deleteRequest('dns/managed/'+id, cb);
-}
-DNSMadeEasy.prototype.getRecordsForID = function(id, cb) {
-	if (typeof id != 'number') throw new Error('Domain ID must be a number');
-	return this._getRequest('dns/managed/'+id+'/records', cb);
-}
-DNSMadeEasy.prototype.updateRecordsForID = function(domainid, recordid, putData, cb) {
-	if (typeof domainid != 'number') throw new Error('Domain ID must be a number');
-	if (typeof recordid != 'number') throw new Error('Record ID must be a number');
-	return this._putRequest('dns/managed/'+domainid+'/records/'+recordid, putData, cb);
-}
-DNSMadeEasy.prototype.createRecordForDomainID = function(domainid, postData, cb) {
-	if (typeof domainid != 'number') throw new Error('Domain ID must be a number');
-	return this._postRequest('dns/managed/'+domainid+'/records', postData, cb);
-}
-DNSMadeEasy.prototype.deleteRecordIDForDomainID = function(domainid, recordid, cb) {
-	if (typeof domainid != 'number') throw new Error('Domain ID must be a number');
-	if (typeof recordid != 'number') throw new Error('Record ID must be a number');
-	return this._deleteRequest('dns/managed/'+domainid+'/records/'+recordid, cb);
-}
-DNSMadeEasy.prototype.getSOA = function(cb) {
-	return this._getRequest('dns/soa', cb);
-}
-DNSMadeEasy.prototype.updateSOA = function(putData, cb) {
-	return this._putRequest('dns/managed', putData, cb);
-}
-DNSMadeEasy.prototype.createDomainsWithSOA = function(postData, cb) {
-	return this._postRequest('dns/managed', postData, cb);
-}
-DNSMadeEasy.prototype.getVanityDNS = function(cb) {
-	return this._getRequest('dns/vanity', cb);
-}
-DNSMadeEasy.prototype.getTemplates = function(cb) {
-	return this._getRequest('dns/template', cb);
-}
-DNSMadeEasy.prototype.getRecordsForTemplateID = function(id, recordType, cb) {
-	if (typeof id != 'number') throw new Error('Template ID must be a number');
-	return this._getRequest('dns/template/'+id+'/records?type='+recordType, cb);
-}
-DNSMadeEasy.prototype.updateRecordsForTemplateID = function(id, putData, cb) {
-	if (typeof id != 'number') throw new Error('Template ID must be a number');
-	return this._putRequest('dns/template/'+id+'/records', putData, cb);
-}
-DNSMadeEasy.prototype.deleteTemplateRecordWithID = function(templateid, recordid, cb) {
-	if (typeof recordid != 'number') throw new Error('Template ID must be a number');
-	if (typeof templateid != 'number') throw new Error('Template ID must be a number');
-	return this._deleteRequest('dns/template/'+templateid+'/records?ids='+recordid, cb);
-}
-DNSMadeEasy.prototype.getACL = function(cb) {
-	return this._getRequest('dns/transferAcl', cb);
-}
-DNSMadeEasy.prototype.getFolders = function(cb) {
-	return this._getRequest('security/folder', cb);
-}
-DNSMadeEasy.prototype.getQueryUsage = function(cb) {
-	return this._getRequest('usageApi/queriesApi', cb);
-}
-DNSMadeEasy.prototype.getUsageForYearMonth = function(year, month, cb) {
-	return this._getRequest('usageApi/queriesApi/'+year+'/'+month, cb);
-}
-DNSMadeEasy.prototype.getUsageForYearMonthDomainID = function(year, month, domainid, cb) {
-	if (typeof domainid != 'number') throw new Error('Domain ID must be a number');
-	return this._getRequest('usageApi/queriesApi/'+year+'/'+month+'/managed/'+domainid, cb);	
-}
-DNSMadeEasy.prototype.configureFailoverForID = function(id, putData, cb) {
-	if (typeof id != 'number') throw new Error('Domain ID must be a number');
-	return this._putRequest('monitor/'+id, putData, cb);
-}
-DNSMadeEasy.prototype.createSecondaryDomains = function(postData, cb) {
-	return this._postRequest('dns/secondary', postData, cb);
-}
-DNSMadeEasy.prototype.deleteSecondaryDomainByID = function(id, cb) {
-	if (typeof id != 'number') throw new Error('Domain ID must be a number');
-	return this._deleteRequest('dns/secondary/'+id, cb);
-}
-DNSMadeEasy.prototype.getIPSets = function(cb) {
-	return this._getRequest('dns/ipSet', cb);
+DNSMadeEasy.prototype.getDomainName = function(domainName, cb) {
+	var self = this;
+	self._getRequest('domains/'+domainName, function(err, data){
+		if (err) {
+			cb(err);
+		} else {
+			cb(null, JSON.parse(data));
+		}
+	});
 }
 
+DNSMadeEasy.prototype.getNameServersForDomain = function(domainName, cb) {
+	var self = this;
+	self.getDomainName(domainName, function(err, data) {
+		if (err) {
+			cb(err);
+		} else {
+			cb(null, data.nameServer);
+		}
+	});
+}
+
+DNSMadeEasy.prototype.getRecordsForDomain = function(domainName, cb, filter) {
+	var self = this;
+	self._getRequest('domains/'+domainName+'/records', function(err, data) {
+		if (err) {
+			cb(err);
+		} else {
+			var d = JSON.parse(data);
+			if (typeof(filter) != 'undefined') {
+				var records = [];
+				d.forEach(function(record) {
+					if (record.type == filter) {
+						//console.log(record);
+						records.push(record);
+					}
+				});
+				cb(null, records);
+			} else {
+				cb(null, d);
+			}
+		}
+	});
+}
 exports.DNSMadeEasy = DNSMadeEasy;
 
 module.exports = exports;
