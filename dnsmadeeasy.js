@@ -58,7 +58,11 @@ DNSMadeEasy.prototype._getRequest = function(path, cb) {
 			cb(err.code);
 		});
 		res.on('end', function() {
-			cb(undefined, data);
+			if (data) {
+				cb(undefined, JSON.parse(data));
+			} else {
+				cb(undefined, {status: 'success'});
+			}
 		});
 	});
 	req.end();
@@ -78,7 +82,11 @@ DNSMadeEasy.prototype._putRequest = function(path, putData, cb) {
 			cb(err.code);
 		});
 		res.on('end', function() {
-			cb(undefined, data);
+			if (data) {
+				cb(undefined, JSON.parse(data));
+			} else {
+				cb(undefined, {status: 'success'});
+			}
 		});
 	});
 	req.end(body);
@@ -98,7 +106,12 @@ DNSMadeEasy.prototype._postRequest = function(path, postData, cb) {
 			cb(err.code);
 		});
 		res.on('end', function() {
-			cb(undefined, data);
+			if (data) {
+				cb(undefined, JSON.parse(data));
+			} else {
+				cb(undefined, {status: 'success'});
+			}
+
 		});
 	});
 	req.end(body);
@@ -116,7 +129,12 @@ DNSMadeEasy.prototype._deleteRequest = function(path, cb) {
 			cb(err.code);
 		});
 		res.on('end', function() {
-			cb(undefined, data);
+			if (data) {
+				cb(undefined, JSON.parse(data));
+			} else {
+				cb(undefined, {status: 'success'});
+			}
+
 		});
 	});
 	req.end();
@@ -126,97 +144,103 @@ DNSMadeEasy.prototype._deleteRequest = function(path, cb) {
 // Get all domains
 DNSMadeEasy.prototype.getDomains = function(cb) {
 	var self = this;
-	this._getRequest('domains', function(err, data){
-		if (err) {
-			cb(err);
-		} else {
-			cb(null, JSON.parse(data).list);
-		}
-	});
+	self._getRequest('domains', cb);
 }
 
 DNSMadeEasy.prototype.getDomainName = function(domainName, cb) {
 	var self = this;
-	self._getRequest('domains/'+domainName, function(err, data){
-		if (err) {
-			cb(err);
-		} else {
-			cb(null, JSON.parse(data));
-		}
-	});
-}
-
-
-
-DNSMadeEasy.prototype.getNameServersForDomain = function(domainName, cb) {
-	var self = this;
-	self.getDomainName(domainName, function(err, data) {
-		if (err) {
-			cb(err);
-		} else {
-			cb(null, data.nameServer);
-		}
-	});
-}
-
-DNSMadeEasy.prototype.getRecordsForDomain = function(domainName, cb, filter) {
-	var self = this;
-	self._getRequest('domains/'+domainName+'/records', function(err, data) {
-		if (err) {
-			cb(err);
-		} else {
-			var d = JSON.parse(data);
-			if (typeof(filter) != 'undefined') {
-				var records = [];
-				d.forEach(function(record) {
-					if (record.type == filter) {
-						//console.log(record);
-						records.push(record);
-					}
-				});
-				cb(null, records);
-			} else {
-				cb(null, d);
-			}
-		}
-	});
+	if (typeof(domainName) == 'undefined') cb(new Error('Domain name must be specified'));
+	self._getRequest('domains/'+domainName, cb);
 }
 
 DNSMadeEasy.prototype.createDomain = function(domainName, cb) {
 	var self = this;
 	if (typeof(domainName) == 'undefined') cb(new Error('Domain name must be specified'));
-	self._putRequest('domains/'+domainName, '', function(err, data){
-		if (err) {
-			cb(err);
-		} else {
-			cb(null, JSON.parse(data));
-		}
-	});
+	self._putRequest('domains/'+domainName, '', cb);
 }
 
 DNSMadeEasy.prototype.deleteDomain = function(domainName, cb) {
 	var self = this;
 	if (typeof(domainName) == 'undefined') cb(new Error('Domain name must be specified'));
-	self._deleteRequest('domains/'+domainName, function(err, data) {
-		if (err) {
-			cb(err);
-		} else {
-			if (data) {
-				console.log('printing data');
-				console.log(data);
-				cb(null, JSON.parse(data));
-			} else {
-				cb(null, {status: 'success'});
-			}
-			
-		}
-	});
+	self._deleteRequest('domains/'+domainName, cb);
 }
 
-DNSMadeEasy.prototype.getAllRecords = function(cb) {
+DNSMadeEasy.prototype.getNameServersForDomain = function(domainName, cb) {
 	var self = this;
-	self._getRequest('records/', cb);
+	if (typeof(domainName) == 'undefined') cb(new Error('Domain name must be specified'));
+	self.getDomainName(domainName, cb);
 }
+
+DNSMadeEasy.prototype.getRecordsForDomain = function(domainName, cb, filter, gtd) {
+	var self = this;
+	if (typeof(domainName) == 'undefined') cb(new Error('Domain name must be specified'));
+	var url = 'domains/'+domainName+'/records';
+	if (typeof(filter) != 'undefined') {
+		url += '?type='+filter;
+	}
+	
+	if (typeof(gtd) != 'undefined') {
+		if (typeof(filter) == 'undefined') {
+			url += '?gtdLocation='+gtd;
+		} else {
+			url += '&gtdLocation='+gtd;
+		}
+
+	}
+	self._getRequest(url, cb);
+}
+
+DNSMadeEasy.prototype.getRecordForDomain = function(domainName, recordId, cb) {
+	var self = this;
+	if (typeof(domainName) == 'undefined') cb(new Error('Domain name must be specified'));
+	if (typeof(recordId) == 'undefined') cb(new Error('Record ID must be specified'));
+	self._getRequest('domains/'+domainName+'/records/'+recordId, cb);
+}
+
+DNSMadeEasy.prototype.addRecordForDomain = function(domainName, recordData, cb) {
+	var self = this;
+	if (typeof(domainName) == 'undefined') cb(new Error('Domain name must be specified'));
+	if (typeof(recordId) == 'undefined') cb(new Error('Record ID must be specified'));
+	self._postRequest('domains/'+domainName+'/records', recordData, cb);
+}
+
+DNSMadeEasy.prototype.deleteRecordForDomain = function(domainName, recordId, cb) {
+	var self = this;
+	if (typeof(domainName) == 'undefined') cb(new Error('Domain name must be specified'));
+	if (typeof(recordId) == 'undefined') cb(new Error('Record ID must be specified'));
+	self._deleteRequest('domains/'+domainName+'/records/'+recordId, cb);
+}
+
+DNSMadeEasy.prototype.updateRecordForDomain = function(domainName, recordId, recordData, cb) {
+	var self = this;
+	if (typeof(domainName) == 'undefined') cb(new Error('Domain name must be specified'));
+	if (typeof(recordId) == 'undefined') cb(new Error('Record ID must be specified'));
+	self._putRequest('domains/'+domainName+'/records/'+recordId, recordData, cb);
+}
+
+DNSMadeEasy.prototype.getSecondaryDomains = function(cb) {
+	var self = this;
+	self._getRequest('secondary', cb);
+}
+
+DNSMadeEasy.prototype.getSecondaryDomain = function(domainName, cb) {
+	var self = this;
+	if (typeof(domainName) == 'undefined') cb(new Error('Domain name must be specified'));
+	self._getRequest('secondary/'+domainName, cb);
+}
+
+DNSMadeEasy.prototype.deleteSecondaryDomain = function(domainName, cb) {
+	var self = this;
+	if (typeof(domainName) == 'undefined') cb(new Error('Domain name must be specified'));
+	self._deleteRequest('secondary/'+domainName, cb);
+}
+
+DNSMadeEasy.prototype.createSecondaryDomain = function(domainName, cb) {
+	var self = this;
+	if (typeof(domainName) == 'undefined') cb(new Error('Domain name must be specified'));
+	self._putRequest('secondary/'+domainName, '', cb);
+}
+
 
 
 
