@@ -1,19 +1,25 @@
 {
   "name": "dnsmadeeasy",
-  "version": "0.0.1",
-  "description": "This is a module to connect to the dnsmadeeasy api",
+  "version": "0.0.2",
+  "description": "This module allows one to connect to DNSMadeEasy's APIs",
   "main": "dnsmadeeasy.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": "",
-  "keywords": [
-    "dns",
-    "dnsmadeeasy"
-  ],
   "dependencies": {
-    "crypto": "0.0.3"
+    "crypto": "~0.0.3"
   },
+  "devDependencies": {},
+  "scripts": {
+    "test": "node tests.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/evanlucas/dnsmadeeasy-node.git"
+  },
+  "keywords": [
+    "dnsmadeeasy",
+    "dns",
+    "api"
+  ],
   "author": "Evan Lucas",
-  "license": "BSD"
+  "license": "BSD",
+  "readmeFilename": "README.md"
 }

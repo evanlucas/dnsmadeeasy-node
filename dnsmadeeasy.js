@@ -28,8 +28,6 @@ var DNSMadeEasy = function(apikey, secret, isProd) {
 	}
 }
 
-
-
 DNSMadeEasy.prototype = {};
 
 DNSMadeEasy.prototype._createHttpOptions = function(resource, method, action) {
@@ -148,6 +146,8 @@ DNSMadeEasy.prototype.getDomainName = function(domainName, cb) {
 	});
 }
 
+
+
 DNSMadeEasy.prototype.getNameServersForDomain = function(domainName, cb) {
 	var self = this;
 	self.getDomainName(domainName, function(err, data) {
@@ -181,6 +181,45 @@ DNSMadeEasy.prototype.getRecordsForDomain = function(domainName, cb, filter) {
 		}
 	});
 }
+
+DNSMadeEasy.prototype.createDomain = function(domainName, cb) {
+	var self = this;
+	if (typeof(domainName) == 'undefined') cb(new Error('Domain name must be specified'));
+	self._putRequest('domains/'+domainName, '', function(err, data){
+		if (err) {
+			cb(err);
+		} else {
+			cb(null, JSON.parse(data));
+		}
+	});
+}
+
+DNSMadeEasy.prototype.deleteDomain = function(domainName, cb) {
+	var self = this;
+	if (typeof(domainName) == 'undefined') cb(new Error('Domain name must be specified'));
+	self._deleteRequest('domains/'+domainName, function(err, data) {
+		if (err) {
+			cb(err);
+		} else {
+			if (data) {
+				console.log('printing data');
+				console.log(data);
+				cb(null, JSON.parse(data));
+			} else {
+				cb(null, {status: 'success'});
+			}
+			
+		}
+	});
+}
+
+DNSMadeEasy.prototype.getAllRecords = function(cb) {
+	var self = this;
+	self._getRequest('records/', cb);
+}
+
+
+
 exports.DNSMadeEasy = DNSMadeEasy;
 
 module.exports = exports;
